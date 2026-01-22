@@ -1,8 +1,7 @@
 # CABLETESTER-V2
 
 
-##-- het pullen van een nieuwe git repository versie --
-
+#-- het pullen van een nieuwe git repository versie --
 cd /home/pi/cable-tester
 git pull
 sudo systemctl restart cable-tester.service
@@ -24,6 +23,14 @@ cd LCD-show
 chmod -R 755 .
 sudo ./MHS35-show
 
-##-- frame buffer leeg maken (schermleeg maken)
+##-- frame buffer leeg maken (schermleeg maken)-- 
 sudo killall fbi 2>/dev/null || true
 sudo dd if=/dev/zero of=/dev/fb1 bs=1M count=8 2>/dev/null
+
+
+#-- update van een git repository versie --
+cd /home/pi/cable-tester
+sudo systemctl stop cable-tester.service
+git fetch --prune
+git reset --hard origin/main
+sudo systemctl start cable-tester.service
