@@ -70,10 +70,6 @@ class TestScreen(QWidget):
         self.lblTitle.setObjectName("Title")
         self.layout.addWidget(self.lblTitle)
 
-        self.lblStatus = QLabel("Klaar voor test")
-        self.lblStatus.setObjectName("Hint")
-        self.layout.addWidget(self.lblStatus)
-
         self.grid = QGridLayout()
         self.grid.setSpacing(12)
 
@@ -92,8 +88,6 @@ class TestScreen(QWidget):
         connect_safe_press(btnBack, self.back.emit, delay_ms=80)
         self.layout.addWidget(btnBack)
 
-        self._pin_labels = {}  # pin -> QLabel
-
     def set_pins(self, pins):
         # Clear grid safely
         while self.grid.count():
@@ -102,35 +96,7 @@ class TestScreen(QWidget):
             if w:
                 w.deleteLater()
 
-        self._pin_labels.clear()
-        self.lblStatus.setText("Klaar voor test")
-
         for i, p in enumerate(pins):
             lbl = QLabel(f"PIN {p}")
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setProperty("state", "idle")
-            lbl.setStyleSheet("""
-                QLabel {
-                    border: 1px solid #2a3142;
-                    border-radius: 10px;
-                    padding: 14px;
-                    font-size: 18px;
-                    background: #0f1115;
-                }
-                QLabel[state="idle"] { color: #9aa3b2; }
-                QLabel[state="ok"]   { color: #1ecf6a; border-color: #1ecf6a; }
-                QLabel[state="bad"]  { color: #ff4d4d; border-color: #ff4d4d; }
-            """)
-            self._pin_labels[str(p)] = lbl
             self.grid.addWidget(lbl, i // 4, i % 4)
-
-    def apply_result(self, per_pin: dict, passed: bool):
-        for pin, state in per_pin.items():
-            lbl = self._pin_labels.get(str(pin))
-            if not lbl:
-                continue
-            lbl.setProperty("state", "ok" if state == "ok" else "bad")
-            lbl.style().unpolish(lbl)
-            lbl.style().polish(lbl)
-
-        self.lblStatus.setText("PASS ✅" if passed else "FAIL ❌")
