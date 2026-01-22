@@ -42,7 +42,7 @@ class HomeScreen(QWidget):
 
         for i, p in enumerate(pinouts):
             btn = QPushButton(p.title)
-            btn.setMinimumHeight(70)  # 480x320 friendly
+            btn.setMinimumHeight(60)   # iets compacter
             connect_safe_press(btn, lambda k=p.key: self.cableSelected.emit(k), delay_ms=80)
             grid.addWidget(btn, i // 2, i % 2)
 
@@ -71,7 +71,7 @@ class TestScreen(QWidget):
         self.lblStatus.setObjectName("Hint")
         layout.addWidget(self.lblStatus)
 
-        # Grid in een scrollarea: voorkomt dat content buiten beeld valt
+        # Scrollbaar pin-grid
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
 
@@ -86,20 +86,22 @@ class TestScreen(QWidget):
 
         layout.addWidget(scroll, 1)
 
+        # TEST knop – compacter maar goed raakvlak
         btnTest = QPushButton("TEST")
-        btnTest.setMinimumHeight(30)
+        btnTest.setMinimumHeight(50)
         connect_safe_press(btnTest, self.startTest.emit, delay_ms=80)
         layout.addWidget(btnTest)
 
+        # TERUG knop – zelfde maat
         btnBack = QPushButton("TERUG")
-        btnBack.setMinimumHeight(30)
+        btnBack.setMinimumHeight(50)
         connect_safe_press(btnBack, self.back.emit, delay_ms=80)
         layout.addWidget(btnBack)
 
         self._pin_labels = {}  # pin(str) -> QLabel
 
     def set_pins(self, pins):
-        # Clear grid
+        # Grid leegmaken
         while self.grid.count():
             item = self.grid.takeAt(0)
             w = item.widget()
@@ -119,8 +121,8 @@ class TestScreen(QWidget):
                 QLabel {
                     border: 1px solid #2a3142;
                     border-radius: 10px;
-                    padding: 12px;
-                    font-size: 18px;
+                    padding: 10px;
+                    font-size: 17px;
                     background: #0f1115;
                 }
                 QLabel[state="idle"] { color: #9aa3b2; }
