@@ -17,7 +17,8 @@ class HomeScreen(QWidget):
         grid = QGridLayout()
         for i, p in enumerate(pinouts):
             btn = QPushButton(p.title)
-            btn.clicked.connect(lambda _, k=p.key: self.cableSelected.emit(k))
+            # Resistive touch: pressed is betrouwbaarder dan clicked
+            btn.pressed.connect(lambda k=p.key: self.cableSelected.emit(k))
             grid.addWidget(btn, i // 2, i % 2)
 
         card = QFrame()
@@ -44,16 +45,19 @@ class TestScreen(QWidget):
         self.layout.addWidget(card, 1)
 
         btnTest = QPushButton("TEST")
-        btnTest.clicked.connect(self.startTest.emit)
+        btnTest.pressed.connect(self.startTest.emit)
         self.layout.addWidget(btnTest)
 
         btnBack = QPushButton("TERUG")
-        btnBack.clicked.connect(self.back.emit)
+        btnBack.pressed.connect(self.back.emit)
         self.layout.addWidget(btnBack)
 
     def set_pins(self, pins):
         while self.grid.count():
-            self.grid.takeAt(0).widget().deleteLater()
+            item = self.grid.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
 
         for i, p in enumerate(pins):
             lbl = QLabel(f"PIN {p}")
