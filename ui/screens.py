@@ -10,7 +10,7 @@ class HomeScreen(QWidget):
     def __init__(self, pinouts):
         super().__init__()
         layout = QVBoxLayout(self)
-        title = QLabel("Cable Tester")
+        title = QLabel("Cable Tester V2")
         title.setObjectName("Title")
         layout.addWidget(title)
 
