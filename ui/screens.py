@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
-    QGridLayout, QFrame
+    QGridLayout, QFrame, QScrollArea
 )
 
 
@@ -30,16 +30,19 @@ class HomeScreen(QWidget):
         super().__init__()
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
+
         title = QLabel("Cable Tester V2")
         title.setObjectName("Title")
         layout.addWidget(title)
 
         grid = QGridLayout()
-        grid.setSpacing(16)
+        grid.setSpacing(12)
 
         for i, p in enumerate(pinouts):
             btn = QPushButton(p.title)
-            btn.setMinimumHeight(80)
+            btn.setMinimumHeight(70)  # 480x320 friendly
             connect_safe_press(btn, lambda k=p.key: self.cableSelected.emit(k), delay_ms=80)
             grid.addWidget(btn, i // 2, i % 2)
 
@@ -57,6 +60,8 @@ class TestScreen(QWidget):
         super().__init__()
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
 
         self.lblTitle = QLabel("")
         self.lblTitle.setObjectName("Title")
@@ -66,21 +71,28 @@ class TestScreen(QWidget):
         self.lblStatus.setObjectName("Hint")
         layout.addWidget(self.lblStatus)
 
+        # Grid in een scrollarea: voorkomt dat content buiten beeld valt
         self.grid = QGridLayout()
-        self.grid.setSpacing(12)
+        self.grid.setSpacing(10)
 
-        card = QFrame()
-        card.setObjectName("Card")
-        card.setLayout(self.grid)
-        layout.addWidget(card, 1)
+        self.card = QFrame()
+        self.card.setObjectName("Card")
+        self.card.setLayout(self.grid)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setWidget(self.card)
+
+        layout.addWidget(scroll, 1)
 
         btnTest = QPushButton("TEST")
-        btnTest.setMinimumHeight(80)
+        btnTest.setMinimumHeight(70)
         connect_safe_press(btnTest, self.startTest.emit, delay_ms=80)
         layout.addWidget(btnTest)
 
         btnBack = QPushButton("TERUG")
-        btnBack.setMinimumHeight(80)
+        btnBack.setMinimumHeight(70)
         connect_safe_press(btnBack, self.back.emit, delay_ms=80)
         layout.addWidget(btnBack)
 
@@ -102,13 +114,12 @@ class TestScreen(QWidget):
             lbl = QLabel(f"PIN {pin}")
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            # status via property
             lbl.setProperty("state", "idle")
             lbl.setStyleSheet("""
                 QLabel {
                     border: 1px solid #2a3142;
                     border-radius: 10px;
-                    padding: 14px;
+                    padding: 12px;
                     font-size: 18px;
                     background: #0f1115;
                 }
@@ -121,13 +132,12 @@ class TestScreen(QWidget):
             self.grid.addWidget(lbl, i // 4, i % 4)
 
     def apply_result(self, per_pin: dict, passed: bool):
-        # per_pin: {"1": "ok"/"bad", ...}
         for pin, state in per_pin.items():
             lbl = self._pin_labels.get(str(pin))
             if not lbl:
                 continue
+
             lbl.setProperty("state", "ok" if state == "ok" else "bad")
-            # refresh style
             lbl.style().unpolish(lbl)
             lbl.style().polish(lbl)
 
