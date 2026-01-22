@@ -87,12 +87,12 @@ class TestScreen(QWidget):
         layout.addWidget(scroll, 1)
 
         btnTest = QPushButton("TEST")
-        btnTest.setMinimumHeight(70)
+        btnTest.setMinimumHeight(30)
         connect_safe_press(btnTest, self.startTest.emit, delay_ms=80)
         layout.addWidget(btnTest)
 
         btnBack = QPushButton("TERUG")
-        btnBack.setMinimumHeight(70)
+        btnBack.setMinimumHeight(30)
         connect_safe_press(btnBack, self.back.emit, delay_ms=80)
         layout.addWidget(btnBack)
 
