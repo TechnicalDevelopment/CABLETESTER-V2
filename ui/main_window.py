@@ -34,6 +34,19 @@ class MainWindow(QMainWindow):
     def go_home(self):
         self.stack.setCurrentWidget(self.home)
 
-    def run_test(self):
-        # Mock run; GPIO komt later
-        pass
+   def run_test(self):
+    # Bepaal welke pinout actief is op basis van titel
+    title = self.test.lblTitle.text()
+    selected = None
+    for p in self.pinouts.values():
+        if p.title == title:
+            selected = p
+            break
+    if not selected:
+        return
+
+    result = self.engine.run_test(selected.pins)
+
+    # result.per_pin geeft "ok"/"fail" -> we mappen fail naar "bad"
+    per_pin = {str(k): ("ok" if v == "ok" else "bad") for k, v in result.per_pin.items()}
+    self.test.apply_result(per_pin, result.passed)
