@@ -1,15 +1,21 @@
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton,
-    QGridLayout, QFrame, QScrollArea
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QGridLayout,
+    QFrame,
+    QScrollArea,
 )
 
 
 def connect_safe_press(button: QPushButton, callback, delay_ms: int = 80):
     """
-    Resistive touch (ADS7846): eerste contactpunt kan jitteren.
-    Activeer pas na korte delay én alleen als pointer nog binnen dezelfde knop zit.
+    Resistive touch kan op het eerste contactpunt jitteren.
+    We bevestigen de press pas na korte delay en alleen
+    als de pointer nog steeds binnen dezelfde knop zit.
     """
     button.setAutoRepeat(False)
 
@@ -18,6 +24,7 @@ def connect_safe_press(button: QPushButton, callback, delay_ms: int = 80):
             pos = button.mapFromGlobal(QCursor.pos())
             if button.rect().contains(pos):
                 callback()
+
         QTimer.singleShot(delay_ms, confirm)
 
     button.pressed.connect(on_pressed)
@@ -25,6 +32,7 @@ def connect_safe_press(button: QPushButton, callback, delay_ms: int = 80):
 
 class HomeScreen(QWidget):
     cableSelected = pyqtSignal(str)
+    openSettings = pyqtSignal()
 
     def __init__(self, pinouts):
         super().__init__()
@@ -42,14 +50,23 @@ class HomeScreen(QWidget):
 
         for i, p in enumerate(pinouts):
             btn = QPushButton(p.title)
-            btn.setMinimumHeight(60)   # iets compacter
-            connect_safe_press(btn, lambda k=p.key: self.cableSelected.emit(k), delay_ms=80)
+            btn.setMinimumHeight(60)
+            connect_safe_press(
+                btn,
+                lambda k=p.key: self.cableSelected.emit(k),
+                delay_ms=80,
+            )
             grid.addWidget(btn, i // 2, i % 2)
 
         card = QFrame()
         card.setObjectName("Card")
         card.setLayout(grid)
         layout.addWidget(card, 1)
+
+        btn_settings = QPushButton("SETTINGS")
+        btn_settings.setMinimumHeight(45)
+        connect_safe_press(btn_settings, self.openSettings.emit, delay_ms=80)
+        layout.addWidget(btn_settings)
 
 
 class TestScreen(QWidget):
@@ -71,7 +88,6 @@ class TestScreen(QWidget):
         self.lblStatus.setObjectName("Hint")
         layout.addWidget(self.lblStatus)
 
-        # Scrollbaar pin-grid
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
 
@@ -86,36 +102,33 @@ class TestScreen(QWidget):
 
         layout.addWidget(scroll, 1)
 
-        # TEST knop – compacter maar goed raakvlak
-        btnTest = QPushButton("TEST")
-        btnTest.setMinimumHeight(50)
-        connect_safe_press(btnTest, self.startTest.emit, delay_ms=80)
-        layout.addWidget(btnTest)
+        btn_test = QPushButton("TEST")
+        btn_test.setMinimumHeight(45)
+        connect_safe_press(btn_test, self.startTest.emit, delay_ms=80)
+        layout.addWidget(btn_test)
 
-        # TERUG knop – zelfde maat
-        btnBack = QPushButton("TERUG")
-        btnBack.setMinimumHeight(50)
-        connect_safe_press(btnBack, self.back.emit, delay_ms=80)
-        layout.addWidget(btnBack)
+        btn_back = QPushButton("TERUG")
+        btn_back.setMinimumHeight(45)
+        connect_safe_press(btn_back, self.back.emit, delay_ms=80)
+        layout.addWidget(btn_back)
 
-        self._pin_labels = {}  # pin(str) -> QLabel
+        self._pin_labels: dict[str, QLabel] = {}
 
-    def set_pins(self, pins):
-        # Grid leegmaken
+    def set_pins(self, pins: list[str]):
         while self.grid.count():
             item = self.grid.takeAt(0)
-            w = item.widget()
-            if w:
-                w.deleteLater()
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
         self._pin_labels.clear()
         self.lblStatus.setText("Klaar voor test")
 
-        for i, p in enumerate(pins):
-            pin = str(p)
-            lbl = QLabel(f"PIN {pin}")
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        for i, pin in enumerate(pins):
+            pin_str = str(pin)
 
+            lbl = QLabel(f"PIN {pin_str}")
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setProperty("state", "idle")
             lbl.setStyleSheet("""
                 QLabel {
@@ -130,10 +143,10 @@ class TestScreen(QWidget):
                 QLabel[state="bad"]  { color: #ff4d4d; border-color: #ff4d4d; }
             """)
 
-            self._pin_labels[pin] = lbl
+            self._pin_labels[pin_str] = lbl
             self.grid.addWidget(lbl, i // 4, i % 4)
 
-    def apply_result(self, per_pin: dict, passed: bool):
+    def apply_result(self, per_pin: dict[str, str], passed: bool):
         for pin, state in per_pin.items():
             lbl = self._pin_labels.get(str(pin))
             if not lbl:

@@ -1,6 +1,10 @@
+import subprocess
+
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget
+
 from ui.theme import APP_QSS
 from ui.screens import HomeScreen, TestScreen
+from ui.settings_screen import SettingsScreen
 from pinouts.catalog import CATALOG
 from gpio.engine import GpioEngine
 
@@ -12,20 +16,27 @@ class MainWindow(QMainWindow):
 
         self.engine = GpioEngine(mock=True)
         self.pinouts = {p.key: p for p in CATALOG}
-        self.active_key = None  # <- onthoud selectie
+        self.active_key = None
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
         self.home = HomeScreen(CATALOG)
         self.test = TestScreen()
+        self.settings = SettingsScreen()
 
         self.stack.addWidget(self.home)
         self.stack.addWidget(self.test)
+        self.stack.addWidget(self.settings)
 
         self.home.cableSelected.connect(self.open_test)
+        self.home.openSettings.connect(self.open_settings)
+
         self.test.back.connect(self.go_home)
         self.test.startTest.connect(self.run_test)
+
+        self.settings.back.connect(self.go_home)
+        self.settings.updateTriggered.connect(self.run_update)
 
     def open_test(self, key: str):
         self.active_key = key
@@ -33,6 +44,11 @@ class MainWindow(QMainWindow):
         self.test.lblTitle.setText(p.title)
         self.test.set_pins(p.pins)
         self.stack.setCurrentWidget(self.test)
+
+    def open_settings(self):
+        self.settings.lblUpdateStatus.setText("")
+        self.settings.refresh_info()
+        self.stack.setCurrentWidget(self.settings)
 
     def go_home(self):
         self.active_key = None
@@ -45,9 +61,34 @@ class MainWindow(QMainWindow):
         p = self.pinouts[self.active_key]
         result = self.engine.run_test(p.pins)
 
-        # result.per_pin: "ok" of "fail" -> map naar ok/bad
         per_pin = {}
         for k, v in result.per_pin.items():
             per_pin[str(k)] = "ok" if v == "ok" else "bad"
 
         self.test.apply_result(per_pin, result.passed)
+
+    def run_update(self):
+        self.settings.lblUpdateStatus.setText("Update bezig...")
+
+        try:
+            subprocess.run(
+                ["git", "fetch", "--prune"],
+                cwd="/home/pi/cable-tester",
+                check=True,
+            )
+            subprocess.run(
+                ["git", "reset", "--hard", "origin/main"],
+                cwd="/home/pi/cable-tester",
+                check=True,
+            )
+
+            self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
+
+            subprocess.Popen(
+                ["sudo", "systemctl", "restart", "cable-tester.service"]
+            )
+
+        except subprocess.CalledProcessError as exc:
+            self.settings.lblUpdateStatus.setText(f"Update fout: {exc}")
+        except Exception as exc:
+            self.settings.lblUpdateStatus.setText(f"Onbekende fout: {exc}")
