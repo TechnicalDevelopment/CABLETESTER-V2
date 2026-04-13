@@ -68,13 +68,13 @@ class MainWindow(QMainWindow):
         self.test.apply_result(per_pin, result.passed)
 
     def run_update(self):
-        self.settings.lblUpdateStatus.setText("Update gestart...")
+    self.settings.lblUpdateStatus.setText("Update gestart...")
 
-        try:
-            subprocess.Popen(
-                ["sudo", "/home/pi/cable-tester/update.sh"]
-            )
-            self.settings.lblUpdateStatus.setText("Update loopt, app wordt herstart...")
+    try:
+        subprocess.Popen(
+            ["sudo", "bash", "/home/pi/cable-tester/update.sh"]
+        )
+        self.settings.lblUpdateStatus.setText("Update loopt, app wordt herstart...")
 
-        except Exception as exc:
-            self.settings.lblUpdateStatus.setText(f"Update fout: {str(exc)[:120]}")
+    except Exception as exc:
+        self.settings.lblUpdateStatus.setText(f"Update fout: {str(exc)[:120]}")
