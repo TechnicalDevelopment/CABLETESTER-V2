@@ -67,28 +67,43 @@ class MainWindow(QMainWindow):
 
         self.test.apply_result(per_pin, result.passed)
 
-    def run_update(self):
-        self.settings.lblUpdateStatus.setText("Update bezig...")
+  def run_update(self):
+    self.settings.lblUpdateStatus.setText("Update bezig...")
 
-        try:
-            subprocess.run(
-                ["git", "fetch", "--prune"],
-                cwd="/home/pi/cable-tester",
-                check=True,
-            )
-            subprocess.run(
-                ["git", "reset", "--hard", "origin/main"],
-                cwd="/home/pi/cable-tester",
-                check=True,
-            )
+    try:
+        fetch = subprocess.run(
+            ["git", "fetch", "--prune"],
+            cwd="/home/pi/cable-tester",
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
 
-            self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
+        if fetch.returncode != 0:
+            err = (fetch.stderr or fetch.stdout or "Onbekende fout").strip()
+            self.settings.lblUpdateStatus.setText(f"Fetch fout: {err[:120]}")
+            return
 
-            subprocess.Popen(
-                ["sudo", "systemctl", "restart", "cable-tester.service"]
-            )
+        reset = subprocess.run(
+            ["git", "reset", "--hard", "origin/main"],
+            cwd="/home/pi/cable-tester",
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
 
-        except subprocess.CalledProcessError as exc:
-            self.settings.lblUpdateStatus.setText(f"Update fout: {exc}")
-        except Exception as exc:
-            self.settings.lblUpdateStatus.setText(f"Onbekende fout: {exc}")
+        if reset.returncode != 0:
+            err = (reset.stderr or reset.stdout or "Onbekende fout").strip()
+            self.settings.lblUpdateStatus.setText(f"Reset fout: {err[:120]}")
+            return
+
+        self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
+
+        subprocess.Popen(
+            ["sudo", "systemctl", "restart", "cable-tester.service"]
+        )
+
+    except subprocess.TimeoutExpired:
+        self.settings.lblUpdateStatus.setText("Update timeout")
+    except Exception as exc:
+        self.settings.lblUpdateStatus.setText(f"Update fout: {str(exc)[:120]}")
