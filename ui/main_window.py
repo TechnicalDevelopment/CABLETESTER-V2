@@ -71,8 +71,8 @@ class MainWindow(QMainWindow):
         self.settings.lblUpdateStatus.setText("Update gestart...")
 
         try:
-            subprocess.Popen(
-                ["sudo", "/home/pi/cable-tester/update.sh"]
+           subprocess.Popen(
+            ["sudo", "bash", "/home/pi/cable-tester/update.sh"]
             )
             self.settings.lblUpdateStatus.setText("Update loopt, app wordt herstart...")
 

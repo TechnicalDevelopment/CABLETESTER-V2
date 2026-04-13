@@ -3,12 +3,9 @@ set -e
 
 cd /home/pi/cable-tester
 
-# Zorg dat de service niet actief draait tijdens update
-systemctl stop cable-tester.service || true
+/usr/bin/systemctl stop cable-tester.service || true
 
-# Repo bijwerken
-git fetch --prune
-git reset --hard origin/main
+/usr/bin/git fetch --prune
+/usr/bin/git reset --hard origin/main
 
-# Service opnieuw starten
-systemctl start cable-tester.service
+/usr/bin/systemctl start cable-tester.service
