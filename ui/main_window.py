@@ -68,27 +68,13 @@ class MainWindow(QMainWindow):
         self.test.apply_result(per_pin, result.passed)
 
     def run_update(self):
-        self.settings.lblUpdateStatus.setText("Update bezig...")
+        self.settings.lblUpdateStatus.setText("Update gestart...")
 
         try:
-            subprocess.run(
-                ["git", "fetch", "--prune"],
-                cwd="/home/pi/cable-tester",
-                check=True,
-            )
-            subprocess.run(
-                ["git", "reset", "--hard", "origin/main"],
-                cwd="/home/pi/cable-tester",
-                check=True,
-            )
-
-            self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
-
             subprocess.Popen(
-                ["sudo", "systemctl", "restart", "cable-tester.service"]
+                ["sudo", "/home/pi/cable-tester/update.sh"]
             )
+            self.settings.lblUpdateStatus.setText("Update loopt, app wordt herstart...")
 
-        except subprocess.CalledProcessError as exc:
-            self.settings.lblUpdateStatus.setText(f"Update fout: {exc}")
         except Exception as exc:
-            self.settings.lblUpdateStatus.setText(f"Onbekende fout: {exc}")
+            self.settings.lblUpdateStatus.setText(f"Update fout: {str(exc)[:120]}")
