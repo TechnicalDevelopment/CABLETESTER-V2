@@ -41,7 +41,7 @@ class HomeScreen(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
 
-        title = QLabel("Cable Tester V2")
+        title = QLabel("Cable Tester V2.2")
         title.setObjectName("Title")
         layout.addWidget(title)
 

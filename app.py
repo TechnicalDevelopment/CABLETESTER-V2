@@ -78,7 +78,7 @@ class TouchToMouseFilter(QObject):
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Cable Tester V2.2")
+    app.setApplicationName("Cable Tester V2")
 
     # Forceer touch->mouse
     app.installEventFilter(TouchToMouseFilter())
