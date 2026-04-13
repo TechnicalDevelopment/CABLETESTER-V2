@@ -67,43 +67,28 @@ class MainWindow(QMainWindow):
 
         self.test.apply_result(per_pin, result.passed)
 
-  def run_update(self):
-    self.settings.lblUpdateStatus.setText("Update bezig...")
+    def run_update(self):
+        self.settings.lblUpdateStatus.setText("Update bezig...")
 
-    try:
-        fetch = subprocess.run(
-            ["git", "fetch", "--prune"],
-            cwd="/home/pi/cable-tester",
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+        try:
+            subprocess.run(
+                ["git", "fetch", "--prune"],
+                cwd="/home/pi/cable-tester",
+                check=True,
+            )
+            subprocess.run(
+                ["git", "reset", "--hard", "origin/main"],
+                cwd="/home/pi/cable-tester",
+                check=True,
+            )
 
-        if fetch.returncode != 0:
-            err = (fetch.stderr or fetch.stdout or "Onbekende fout").strip()
-            self.settings.lblUpdateStatus.setText(f"Fetch fout: {err[:120]}")
-            return
+            self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
 
-        reset = subprocess.run(
-            ["git", "reset", "--hard", "origin/main"],
-            cwd="/home/pi/cable-tester",
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+            subprocess.Popen(
+                ["sudo", "systemctl", "restart", "cable-tester.service"]
+            )
 
-        if reset.returncode != 0:
-            err = (reset.stderr or reset.stdout or "Onbekende fout").strip()
-            self.settings.lblUpdateStatus.setText(f"Reset fout: {err[:120]}")
-            return
-
-        self.settings.lblUpdateStatus.setText("Update gereed, herstart...")
-
-        subprocess.Popen(
-            ["sudo", "systemctl", "restart", "cable-tester.service"]
-        )
-
-    except subprocess.TimeoutExpired:
-        self.settings.lblUpdateStatus.setText("Update timeout")
-    except Exception as exc:
-        self.settings.lblUpdateStatus.setText(f"Update fout: {str(exc)[:120]}")
+        except subprocess.CalledProcessError as exc:
+            self.settings.lblUpdateStatus.setText(f"Update fout: {exc}")
+        except Exception as exc:
+            self.settings.lblUpdateStatus.setText(f"Onbekende fout: {exc}")
